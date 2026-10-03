@@ -12,7 +12,6 @@ const emailsRouter = require("./routes/emails");
 
 const app = express();
 const url = process.env.MONGODB_URI;
-console.log("url", url);
 
 mongoose
   .connect(url)
@@ -52,12 +51,7 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/emails", emailsRouter);
 
 const port = process.env.PORT || 4000;
-
-if (!process.env.VERCEL && require.main === module) {
-  app.listen(port, () => {
-    console.log(`FlowDesk API on http://localhost:${port}`);
-    console.log(`Health: http://localhost:${port}/health`);
-  });
-}
-
-module.exports = app;
+app.listen(port, () => {
+  console.log(`FlowDesk API on http://localhost:${port}`);
+  console.log(`Health: http://localhost:${port}/health`);
+});
