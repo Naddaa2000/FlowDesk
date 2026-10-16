@@ -3,7 +3,12 @@ import { useAppStore } from '../store/useAppStore';
 import { Avatar } from './Avatar';
 import clsx from 'clsx';
 
-export function Sidebar() {
+type SidebarProps = {
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
+};
+
+export function Sidebar({ mobileOpen = false, onNavigate }: SidebarProps) {
   const {
     currentUser,
     projects,
@@ -16,7 +21,7 @@ export function Sidebar() {
   const canCreate = Boolean(currentUser);
 
   return (
-    <aside className="sidebar">
+    <aside className={clsx('sidebar', mobileOpen && 'sidebar-open')}>
       <div className="brand">
         <div className="brand-mark">
           <LayoutList size={16} color="#fff" />
@@ -54,7 +59,10 @@ export function Sidebar() {
             <button
               key={project.id}
               className={clsx('list-row', selectedProjectId === project.id && 'active')}
-              onClick={() => selectProject(project.id)}
+              onClick={() => {
+                void selectProject(project.id);
+                onNavigate?.();
+              }}
               style={{ marginBottom: 2 }}
             >
               <span className="space-swatch" style={{ background: project.color }} />

@@ -9,6 +9,11 @@ import {
   type ApiTask,
   type ApiUser,
 } from '../api/client';
+import { getPersistedUiState, syncUiState } from '../utils/uiPersistence';
+import {
+  defaultAssigneeFilter,
+  type AssigneeFilterState,
+} from '../utils/taskFilters';
 
 export type ViewType = 'list' | 'board' | 'calendar';
 export type Priority = 'urgent' | 'high' | 'normal' | 'low' | null;
@@ -29,7 +34,15 @@ interface AppState {
   selectedTaskId: string | null;
   activeViewType: ViewType;
   searchQuery: string;
-  showCreateModal: 'project' | 'task' | 'status' | 'member' | 'invite' | null;
+  assigneeFilter: AssigneeFilterState;
+  showCreateModal:
+    | 'project'
+    | 'edit-project'
+    | 'task'
+    | 'status'
+    | 'member'
+    | 'invite'
+    | null;
   showStatusManager: boolean;
 
   bootstrap: () => Promise<void>;
@@ -45,6 +58,7 @@ interface AppState {
 
   setActiveViewType: (t: ViewType) => void;
   setSearchQuery: (q: string) => void;
+  setAssigneeFilter: (filter: AssigneeFilterState) => void;
   setShowCreateModal: (m: AppState['showCreateModal']) => void;
   setShowStatusManager: (open: boolean) => void;
   clearError: () => void;
@@ -55,6 +69,16 @@ interface AppState {
     leadId?: string;
     description?: string;
   }) => Promise<void>;
+  updateProject: (
+    id: string,
+    payload: {
+      name?: string;
+      color?: string;
+      leadId?: string;
+      description?: string;
+    },
+  ) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   createTask: (payload: {
     name: string;
     description?: string;
@@ -109,7 +133,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   showStatusManager: false,
 
   clearError: () => set({ error: null }),
-  setActiveViewType: (t) => set({ activeViewType: t }),
+  setActiveViewType: (t) => {
+    set({ activeViewType: t });
+    syncUiState(get().selectedProjectId, t);
+  },
   setSearchQuery: (q) => set({ searchQuery: q }),
   setShowCreateModal: (m) => set({ showCreateModal: m }),
   setShowStatusManager: (open) => set({ showStatusManager: open }),
@@ -185,17 +212,24 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadProjects: async () => {
     const projects = await api.getProjects();
+    const persisted = getPersistedUiState();
+    const current = get().selectedProjectId;
     const selected =
-      get().selectedProjectId &&
-      projects.some((p) => p.id === get().selectedProjectId)
-        ? get().selectedProjectId
-        : projects[0]?.id ?? null;
-    set({ projects, selectedProjectId: selected });
+      (current && projects.some((p) => p.id === current) && current) ||
+      (persisted.projectId &&
+        projects.some((p) => p.id === persisted.projectId) &&
+        persisted.projectId) ||
+      projects[0]?.id ||
+      null;
+    const view = persisted.view;
+    set({ projects, selectedProjectId: selected, activeViewType: view });
+    syncUiState(selected, view);
     if (selected) await get().loadTasks(selected);
   },
 
   selectProject: async (id) => {
     set({ selectedProjectId: id, selectedTaskId: null, comments: [], attachments: [] });
+    syncUiState(id, get().activeViewType);
     const project = await api.getProject(id);
     set({
       projects: get().projects.map((p) => (p.id === id ? project : p)),
@@ -251,7 +285,32 @@ export const useAppStore = create<AppState>((set, get) => ({
       showCreateModal: null,
       tasks: [],
     });
+    syncUiState(project.id, get().activeViewType);
     await get().loadTasks(project.id);
+  },
+
+  updateProject: async (id, payload) => {
+    const project = await api.updateProject(id, payload);
+    set({
+      projects: get().projects.map((p) => (p.id === id ? project : p)),
+      showCreateModal: null,
+    });
+  },
+
+  deleteProject: async (id) => {
+    await api.deleteProject(id);
+    const projects = get().projects.filter((p) => p.id !== id);
+    const wasSelected = get().selectedProjectId === id;
+    const selected = wasSelected ? projects[0]?.id ?? null : get().selectedProjectId;
+    set({
+      projects,
+      selectedProjectId: selected,
+      tasks: wasSelected ? [] : get().tasks,
+      selectedTaskId: wasSelected ? null : get().selectedTaskId,
+      showCreateModal: null,
+    });
+    syncUiState(selected, get().activeViewType);
+    if (selected && wasSelected) await get().loadTasks(selected);
   },
 
   createTask: async ({ name, description, priority, assignees }) => {

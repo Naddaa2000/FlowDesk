@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
@@ -14,8 +14,6 @@ export default function App() {
     currentUser,
     bootstrap,
     loading,
-    showStatusManager,
-    setShowStatusManager,
   } = useAppStore();
 
   useEffect(() => {
@@ -35,10 +33,30 @@ export default function App() {
   if (!currentUser) return <LoginPage />;
 
   return (
+    <AppShell />
+  );
+}
+
+function AppShell() {
+  const { showStatusManager, setShowStatusManager } = useAppStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
     <div className="app-shell">
-      <Sidebar />
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Close menu"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <Sidebar
+        mobileOpen={sidebarOpen}
+        onNavigate={() => setSidebarOpen(false)}
+      />
       <div className="main">
-        <Topbar />
+        <Topbar onMenuClick={() => setSidebarOpen((o) => !o)} />
         <WorkspaceView />
       </div>
       <TaskDrawer />

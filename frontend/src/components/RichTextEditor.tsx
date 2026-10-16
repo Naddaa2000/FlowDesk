@@ -114,7 +114,6 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
           setFocused(false);
           save();
         }}
-        onInput={save}
         suppressContentEditableWarning
       />
     </div>

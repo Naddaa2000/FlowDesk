@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore, type Priority } from '../store/useAppStore';
+import { canManageGroups } from '../utils/permissions';
 
 const COLORS = ['#0f766e', '#0369a1', '#b45309', '#be123c', '#6d28d9', '#15803d'];
 
@@ -12,6 +13,8 @@ export function CreateModal() {
     projects,
     selectedProjectId,
     createProject,
+    updateProject,
+    deleteProject,
     createTask,
     addStatus,
     addOrInviteMember,
@@ -30,14 +33,25 @@ export function CreateModal() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (!showCreateModal) return null;
-
   const project = projects.find((p) => p.id === selectedProjectId);
+
+  useEffect(() => {
+    if (showCreateModal !== 'edit-project' || !project) return;
+    setName(project.name);
+    setDescription(project.description || '');
+    setColor(project.color || COLORS[0]);
+    setLeadId(project.leadId || '');
+    setError('');
+  }, [showCreateModal, project?.id, project?.name, project?.description, project?.color, project?.leadId]);
+
+  if (!showCreateModal) return null;
   const members = project?.members?.map((m) => m.user) ?? [];
   const availableUsers = users.filter((u) => !members.some((m) => m.id === u.id));
+  const canDeleteProject = canManageGroups(currentUser, project);
 
   const titles = {
     project: 'Create project',
+    'edit-project': 'Edit project',
     task: 'Create task',
     status: 'Create status group',
     member: 'Add member',
@@ -66,6 +80,17 @@ export function CreateModal() {
             name: name.trim(),
             color,
             leadId: currentUser?.role === 'admin' && leadId ? leadId : undefined,
+            description: description.trim() || undefined,
+          });
+          break;
+        case 'edit-project':
+          if (!selectedProjectId) throw new Error('No project selected');
+          await updateProject(selectedProjectId, {
+            name: name.trim(),
+            color,
+            description: description.trim(),
+            leadId:
+              currentUser?.role === 'admin' && leadId ? leadId : undefined,
           });
           break;
         case 'task':
@@ -183,7 +208,68 @@ export function CreateModal() {
               </>
             )}
 
-            {showCreateModal !== 'member' && showCreateModal !== 'invite' && (
+            {showCreateModal === 'edit-project' && (
+              <>
+                <label>
+                  Name
+                  <input
+                    autoFocus
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Project name"
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Optional description"
+                    rows={3}
+                    style={{
+                      padding: '10px 12px',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      outline: 'none',
+                      resize: 'vertical',
+                      fontWeight: 500,
+                    }}
+                  />
+                </label>
+                <label>
+                  Color
+                  <div className="color-row">
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`color-swatch ${color === c ? 'selected' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setColor(c)}
+                      />
+                    ))}
+                  </div>
+                </label>
+                {currentUser?.role === 'admin' && (
+                  <label>
+                    Assign lead
+                    <select value={leadId} onChange={(e) => setLeadId(e.target.value)}>
+                      <option value="">Keep current lead</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.email})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </>
+            )}
+
+            {showCreateModal !== 'member' &&
+              showCreateModal !== 'invite' &&
+              showCreateModal !== 'edit-project' && (
               <>
                 <label>
                   {showCreateModal === 'task' ? 'Title' : 'Name'}
@@ -286,6 +372,37 @@ export function CreateModal() {
             {error && <div className="auth-error">{error}</div>}
           </div>
           <div className="modal-footer">
+            {showCreateModal === 'edit-project' &&
+              selectedProjectId &&
+              canDeleteProject && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ marginRight: 'auto', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                disabled={busy}
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      'Delete this project and all its tasks? This cannot be undone.',
+                    )
+                  ) {
+                    return;
+                  }
+                  setBusy(true);
+                  setError('');
+                  try {
+                    await deleteProject(selectedProjectId);
+                    close();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Delete failed');
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Delete project
+              </button>
+            )}
             <button type="button" className="btn btn-ghost" onClick={close}>
               Cancel
             </button>

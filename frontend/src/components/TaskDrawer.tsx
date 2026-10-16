@@ -138,8 +138,12 @@ export function TaskDrawer() {
             <input
               className="cu-title"
               placeholder="Task title"
-              value={task.name}
-              onChange={(e) => updateTask(task.id, { name: e.target.value })}
+              defaultValue={task.name}
+              key={task.id}
+              onBlur={(e) => {
+                const next = e.target.value.trim();
+                if (next && next !== task.name) updateTask(task.id, { name: next });
+              }}
             />
 
             <div className="cu-props">

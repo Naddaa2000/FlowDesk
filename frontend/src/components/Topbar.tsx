@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Mail, Plus, Search, UserPlus } from 'lucide-react';
+import { Mail, Menu, Plus, Search, UserPlus } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { canManageGroups } from '../utils/permissions';
@@ -15,7 +15,11 @@ type EmailRow = {
   error?: string;
 };
 
-export function Topbar() {
+type TopbarProps = {
+  onMenuClick?: () => void;
+};
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -52,6 +56,16 @@ export function Topbar() {
 
   return (
     <header className="topbar">
+      {onMenuClick && (
+        <button
+          type="button"
+          className="btn-icon topbar-menu"
+          aria-label="Open projects menu"
+          onClick={onMenuClick}
+        >
+          <Menu size={20} />
+        </button>
+      )}
       <div className="search-box">
         <Search size={16} color="#8a9e97" />
         <input

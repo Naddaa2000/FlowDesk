@@ -64,12 +64,20 @@ export function WorkspaceView() {
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {canManage && (
-              <button
-                className="btn btn-ghost"
-                onClick={() => setShowStatusManager(true)}
-              >
-                <Settings2 size={14} /> Statuses
-              </button>
+              <>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowCreateModal('edit-project')}
+                >
+                  <Settings2 size={14} /> Project settings
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowStatusManager(true)}
+                >
+                  Statuses
+                </button>
+              </>
             )}
             {isLead && (
               <>
