@@ -8,20 +8,18 @@ import {
   startOfWeek,
 } from 'date-fns';
 import { useAppStore } from '../store/useAppStore';
+import { useFilteredTasks } from '../hooks/useFilteredTasks';
 
 export function CalendarView() {
-  const { tasks, openTask, searchQuery } = useAppStore();
+  const { openTask } = useAppStore();
+  const filteredTasks = useFilteredTasks();
   const now = new Date();
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(now)),
     end: endOfWeek(endOfMonth(now)),
   });
 
-  const listTasks = tasks.filter((t) => {
-    if (!t.dueDate) return false;
-    if (!searchQuery.trim()) return true;
-    return t.name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const listTasks = filteredTasks.filter((t) => t.dueDate);
 
   return (
     <div>

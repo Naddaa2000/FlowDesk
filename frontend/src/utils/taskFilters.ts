@@ -20,9 +20,10 @@ export function matchesAssigneeFilter(
   filter: AssigneeFilterState,
 ): boolean {
   if (!isAssigneeFilterActive(filter)) return true;
-  const ids = task.assigneeIds || [];
+  const ids = (task.assigneeIds || []).map(String);
   if (filter.unassignedOnly) return ids.length === 0;
-  return ids.some((id) => filter.userIds.includes(id));
+  const selected = new Set(filter.userIds.map(String));
+  return ids.some((id) => selected.has(id));
 }
 
 export function filterTasksBySearchAndAssignee(

@@ -1,8 +1,4 @@
 import type { ViewType } from '../store/useAppStore';
-import {
-  defaultAssigneeFilter,
-  type AssigneeFilterState,
-} from './taskFilters';
 
 const PROJECT_KEY = 'flowdesk_project';
 const VIEW_KEY = 'flowdesk_view';

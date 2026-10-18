@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "babel-node app.js",
-    "dev": "nodemon --exec babel-node app.js",
+    "start": "node init && babel-node app.js",
+    "dev": "node init && nodemon --exec babel-node app.js",
     "seed": "babel-node scripts/seed.js"
   },
   "author": "",

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type DragEvent } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useFilteredTasks } from '../hooks/useFilteredTasks';
 import { AvatarStack } from './Avatar';
 import { PriorityChip } from './TaskBits';
 import { canManageGroups } from '../utils/permissions';
@@ -12,7 +13,6 @@ export function BoardView() {
     projects,
     tasks,
     users,
-    searchQuery,
     currentUser,
     openTask,
     moveTaskStatus,
@@ -21,6 +21,7 @@ export function BoardView() {
     updateStatus,
     deleteStatus,
   } = useAppStore();
+  const filteredTasks = useFilteredTasks();
 
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -40,16 +41,13 @@ export function BoardView() {
     const statuses = [...(project?.statuses ?? [])].sort(
       (a, b) => a.orderindex - b.orderindex,
     );
-    let filtered = [...tasks];
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter((t) => t.name.toLowerCase().includes(q));
-    }
     return statuses.map((status) => ({
       status,
-      tasks: filtered.filter((t) => String(t.statusId) === String(status.id)),
+      tasks: filteredTasks.filter(
+        (t) => String(t.statusId) === String(status.id),
+      ),
     }));
-  }, [project, tasks, searchQuery]);
+  }, [project, filteredTasks]);
 
   const onDragStart = (e: DragEvent, taskId: string) => {
     didDrag.current = false;
