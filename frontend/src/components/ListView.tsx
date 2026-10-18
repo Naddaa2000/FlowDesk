@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useFilteredTasks } from '../hooks/useFilteredTasks';
 import { AvatarStack } from './Avatar';
 import { DueDate, PriorityChip, StatusPill } from './TaskBits';
 
@@ -7,12 +8,11 @@ export function ListView() {
   const {
     selectedProjectId,
     projects,
-    tasks,
     users,
-    searchQuery,
     openTask,
     moveTaskStatus,
   } = useAppStore();
+  const filteredTasks = useFilteredTasks();
 
   const project = projects.find((p) => p.id === selectedProjectId);
   const statusMap = Object.fromEntries(
@@ -26,14 +26,10 @@ export function ListView() {
     return users.filter((u) => project?.memberIds?.includes(u.id));
   }, [project, users]);
 
-  const rows = useMemo(() => {
-    let filtered = [...tasks];
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter((t) => t.name.toLowerCase().includes(q));
-    }
-    return filtered.sort((a, b) => a.orderindex - b.orderindex);
-  }, [tasks, searchQuery]);
+  const rows = useMemo(
+    () => [...filteredTasks].sort((a, b) => a.orderindex - b.orderindex),
+    [filteredTasks],
+  );
 
   return (
     <table className="task-table">

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import {
   api,
   setToken,
@@ -8,15 +8,15 @@ import {
   type ApiProject,
   type ApiTask,
   type ApiUser,
-} from '../api/client';
-import { getPersistedUiState, syncUiState } from '../utils/uiPersistence';
+} from "../api/client";
+import { getPersistedUiState, syncUiState } from "../utils/uiPersistence";
 import {
   defaultAssigneeFilter,
   type AssigneeFilterState,
-} from '../utils/taskFilters';
+} from "../utils/taskFilters";
 
-export type ViewType = 'list' | 'board' | 'calendar';
-export type Priority = 'urgent' | 'high' | 'normal' | 'low' | null;
+export type ViewType = "list" | "board" | "calendar";
+export type Priority = "urgent" | "high" | "normal" | "low" | null;
 
 interface AppState {
   bootstrapped: boolean;
@@ -36,12 +36,12 @@ interface AppState {
   searchQuery: string;
   assigneeFilter: AssigneeFilterState;
   showCreateModal:
-    | 'project'
-    | 'edit-project'
-    | 'task'
-    | 'status'
-    | 'member'
-    | 'invite'
+    | "project"
+    | "edit-project"
+    | "task"
+    | "status"
+    | "member"
+    | "invite"
     | null;
   showStatusManager: boolean;
 
@@ -59,7 +59,7 @@ interface AppState {
   setActiveViewType: (t: ViewType) => void;
   setSearchQuery: (q: string) => void;
   setAssigneeFilter: (filter: AssigneeFilterState) => void;
-  setShowCreateModal: (m: AppState['showCreateModal']) => void;
+  setShowCreateModal: (m: AppState["showCreateModal"]) => void;
   setShowStatusManager: (open: boolean) => void;
   clearError: () => void;
 
@@ -92,7 +92,7 @@ interface AppState {
   addStatus: (
     name: string,
     color: string,
-    type?: 'open' | 'custom' | 'closed',
+    type?: "open" | "custom" | "closed",
   ) => Promise<void>;
   updateStatus: (
     statusId: string,
@@ -104,9 +104,13 @@ interface AppState {
     email?: string;
     name?: string;
     userId?: string;
-    role?: 'lead' | 'developer' | 'qa';
+    role?: "lead" | "developer" | "qa";
   }) => Promise<void>;
-  addComment: (taskId: string, text: string, mentionIds?: string[]) => Promise<void>;
+  addComment: (
+    taskId: string,
+    text: string,
+    mentionIds?: string[],
+  ) => Promise<void>;
   uploadAttachment: (taskId: string, file: File) => Promise<void>;
   createSubtask: (taskId: string, name: string) => Promise<void>;
   startTimer: (taskId: string) => Promise<void>;
@@ -127,8 +131,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   subtasks: [],
   selectedProjectId: null,
   selectedTaskId: null,
-  activeViewType: 'list',
-  searchQuery: '',
+  activeViewType: "list",
+  searchQuery: "",
+  assigneeFilter: defaultAssigneeFilter(),
   showCreateModal: null,
   showStatusManager: false,
 
@@ -138,11 +143,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     syncUiState(get().selectedProjectId, t);
   },
   setSearchQuery: (q) => set({ searchQuery: q }),
+
+  setAssigneeFilter: (filter) =>
+    set({
+      assigneeFilter: filter,
+    }),
+
   setShowCreateModal: (m) => set({ showCreateModal: m }),
   setShowStatusManager: (open) => set({ showStatusManager: open }),
 
   bootstrap: async () => {
-    const token = localStorage.getItem('flowdesk_token');
+    const token = localStorage.getItem("flowdesk_token");
     if (!token) {
       set({ bootstrapped: true, currentUser: null });
       return;
@@ -172,7 +183,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : 'Login failed',
+        error: err instanceof Error ? err.message : "Login failed",
       });
       throw err;
     }
@@ -188,7 +199,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: err instanceof Error ? err.message : 'Register failed',
+        error: err instanceof Error ? err.message : "Register failed",
       });
       throw err;
     }
@@ -228,7 +239,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   selectProject: async (id) => {
-    set({ selectedProjectId: id, selectedTaskId: null, comments: [], attachments: [] });
+    set({
+      selectedProjectId: id,
+      selectedTaskId: null,
+      comments: [],
+      attachments: [],
+      assigneeFilter: defaultAssigneeFilter(),
+    });
     syncUiState(id, get().activeViewType);
     const project = await api.getProject(id);
     set({
@@ -252,13 +269,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       subtasks: [],
     });
     if (!id) return;
-    const [comments, attachments, task, activity, subtasks] = await Promise.all([
-      api.getComments(id),
-      api.getAttachments(id),
-      api.getTask(id),
-      api.getActivity(id),
-      api.getSubtasks(id),
-    ]);
+    const [comments, attachments, task, activity, subtasks] = await Promise.all(
+      [
+        api.getComments(id),
+        api.getAttachments(id),
+        api.getTask(id),
+        api.getActivity(id),
+        api.getSubtasks(id),
+      ],
+    );
     set({
       comments,
       attachments,
@@ -278,7 +297,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   createProject: async ({ name, color, leadId, description }) => {
-    const project = await api.createProject({ name, color, leadId, description });
+    const project = await api.createProject({
+      name,
+      color,
+      leadId,
+      description,
+    });
     set({
       projects: [project, ...get().projects],
       selectedProjectId: project.id,
@@ -301,7 +325,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     await api.deleteProject(id);
     const projects = get().projects.filter((p) => p.id !== id);
     const wasSelected = get().selectedProjectId === id;
-    const selected = wasSelected ? projects[0]?.id ?? null : get().selectedProjectId;
+    const selected = wasSelected
+      ? (projects[0]?.id ?? null)
+      : get().selectedProjectId;
     set({
       projects,
       selectedProjectId: selected,
@@ -318,7 +344,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!projectId) return;
     const task = await api.createTask(projectId, {
       name,
-      description: description || '',
+      description: description || "",
       priority,
       assignees: assignees || [],
     });
@@ -357,7 +383,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const prev = get().tasks;
     set({
       tasks: prev.map((t) =>
-        t.id === taskId ? { ...t, statusId, updatedAt: new Date().toISOString() } : t,
+        t.id === taskId
+          ? { ...t, statusId, updatedAt: new Date().toISOString() }
+          : t,
       ),
     });
     try {
@@ -369,7 +397,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  addStatus: async (name, color, type = 'custom') => {
+  addStatus: async (name, color, type = "custom") => {
     const projectId = get().selectedProjectId;
     if (!projectId) return;
     const status = await api.addStatus(projectId, { name, color, type });

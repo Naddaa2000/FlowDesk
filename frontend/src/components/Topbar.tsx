@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { canManageGroups } from '../utils/permissions';
 import { formatDistanceToNow } from 'date-fns';
+import { AssigneeFilterBar } from './AssigneeFilterBar';
 
 type EmailRow = {
   id: string;
@@ -66,13 +67,16 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Menu size={20} />
         </button>
       )}
-      <div className="search-box">
-        <Search size={16} color="#8a9e97" />
-        <input
-          placeholder="Search tasks…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="topbar-filters">
+        <div className="search-box">
+          <Search size={16} color="#8a9e97" />
+          <input
+            placeholder="Search tasks…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <AssigneeFilterBar />
       </div>
 
       <div className="topbar-actions">

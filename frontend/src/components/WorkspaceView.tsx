@@ -5,19 +5,19 @@ import {
   Plus,
   Settings2,
   UserPlus,
-} from 'lucide-react';
-import { useAppStore, type ViewType } from '../store/useAppStore';
-import { ListView } from './ListView';
-import { BoardView } from './BoardView';
-import { CalendarView } from './CalendarView';
-import { Avatar } from './Avatar';
-import { canManageGroups } from '../utils/permissions';
-import clsx from 'clsx';
+} from "lucide-react";
+import { useAppStore, type ViewType } from "../store/useAppStore";
+import { ListView } from "./ListView";
+import { BoardView } from "./BoardView";
+import { CalendarView } from "./CalendarView";
+import { Avatar } from "./Avatar";
+import { canManageGroups } from "../utils/permissions";
+import clsx from "clsx";
 
 const TABS: { type: ViewType; label: string; icon: typeof List }[] = [
-  { type: 'list', label: 'List', icon: List },
-  { type: 'board', label: 'Board', icon: Columns3 },
-  { type: 'calendar', label: 'Calendar', icon: CalendarDays },
+  { type: "list", label: "List", icon: List },
+  { type: "board", label: "Board", icon: Columns3 },
+  { type: "calendar", label: "Calendar", icon: CalendarDays },
 ];
 
 export function WorkspaceView() {
@@ -39,7 +39,7 @@ export function WorkspaceView() {
   if (!project) {
     return (
       <div className="view-body">
-        <p style={{ color: 'var(--text-muted)' }}>
+        <p style={{ color: "var(--text-muted)" }}>
           Select or create a project to get started.
         </p>
       </div>
@@ -58,16 +58,16 @@ export function WorkspaceView() {
           />
           <h1>{project.name}</h1>
           {lead && (
-            <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
               Lead: {lead.name}
             </span>
           )}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             {canManage && (
               <>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => setShowCreateModal('edit-project')}
+                  onClick={() => setShowCreateModal("edit-project")}
                 >
                   <Settings2 size={14} /> Project settings
                 </button>
@@ -83,13 +83,13 @@ export function WorkspaceView() {
               <>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => setShowCreateModal('member')}
+                  onClick={() => setShowCreateModal("member")}
                 >
                   <Plus size={14} /> Add member
                 </button>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => setShowCreateModal('invite')}
+                  onClick={() => setShowCreateModal("invite")}
                 >
                   <UserPlus size={14} /> Invite
                 </button>
@@ -114,7 +114,7 @@ export function WorkspaceView() {
           {TABS.map(({ type, label, icon: Icon }) => (
             <button
               key={type}
-              className={clsx('view-tab', activeViewType === type && 'active')}
+              className={clsx("view-tab", activeViewType === type && "active")}
               onClick={() => setActiveViewType(type)}
             >
               <Icon size={14} />
@@ -125,9 +125,9 @@ export function WorkspaceView() {
       </div>
 
       <div className="view-body">
-        {activeViewType === 'list' && <ListView />}
-        {activeViewType === 'board' && <BoardView />}
-        {activeViewType === 'calendar' && <CalendarView />}
+        {activeViewType === "list" && <ListView />}
+        {activeViewType === "board" && <BoardView />}
+        {activeViewType === "calendar" && <CalendarView />}
       </div>
     </div>
   );
